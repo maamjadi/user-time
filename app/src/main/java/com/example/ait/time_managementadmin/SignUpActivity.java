@@ -54,8 +54,9 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         passwordText = (EditText) findViewById(R.id.input_password);
         reEnterPass = (EditText) findViewById(R.id.input_reEnterPassword);
 
-        databaseReference = databaseReference.child("Users");
+
         firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference("Users");
         firebaseAuth = FirebaseAuth.getInstance();
         createAccountButton.setOnClickListener(this);
         mAuthListener = new FirebaseAuth.AuthStateListener() {
