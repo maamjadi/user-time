@@ -1,8 +1,11 @@
 package com.example.ait.time_managementadmin;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,9 +15,28 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.ArrayList;
+
+import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 public class MainBoardUser extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+
+    private FirebaseAuth firebaseAuth;
+    private FirebaseAuth.AuthStateListener firebaseAuthListener;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReference;
+    private static final String TAG = "EmailPassword";
+
+    private EditText name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +45,32 @@ public class MainBoardUser extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference("Users");
+        firebaseAuth = FirebaseAuth.getInstance();
+
+//        StickyListHeadersListView stickyList = (StickyListHeadersListView) findViewById(R.id.list);
+//        ArrayList<String> events = new ArrayList<>();
+//        events.add(0,"tomrw - do nth");
+//        MyAdapter adapter = new MyAdapter(this,events);
+//        stickyList.setAdapter(adapter);
+
+        firebaseAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                } else {
+                    // User is signed out
+                    Log.d(TAG, "onAuthStateChanged:signed_out");
+                    // finish();
+                    Intent back = new Intent(MainBoardUser.this, LoginActivity.class);
+                    startActivity(back);
+                }
+            }
+        };
         // FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -86,7 +134,11 @@ public class MainBoardUser extends AppCompatActivity
 
         } else if (id == R.id.nav_slideshow) {
 
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.Sign_out) {
+            firebaseAuth.signOut();
+            Intent back = new Intent(MainBoardUser.this, LoginActivity.class);
+            startActivity(back);
+            finish();
 
         } else if (id == R.id.nav_share) {
 

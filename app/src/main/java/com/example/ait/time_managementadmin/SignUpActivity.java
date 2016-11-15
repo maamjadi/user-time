@@ -130,6 +130,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     public void createAccount() {
         String email = emailText.getText().toString();
         String password = passwordText.getText().toString();
+        final String name = nameText.getText().toString();
         if (validate()) {
             firebaseAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -151,7 +152,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
                                 firebaseAuth.signOut();
 
-                                Intent main = new Intent(SignUpActivity.this, MainActivity.class);
+                                Intent main = new Intent(SignUpActivity.this, MainBoardUser.class);
                                 startActivity(main);
                             }
 

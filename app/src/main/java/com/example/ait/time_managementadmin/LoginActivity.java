@@ -44,7 +44,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.start);
 
         firebaseAuth = FirebaseAuth.getInstance();
-        databaseReference = FirebaseDatabase.getInstance().getReference();
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference("Users");
 
         progressDialog = new ProgressDialog(this);
         loginButton = (Button) findViewById(R.id.loginButton);
@@ -158,14 +159,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (user != null) {
             // Read from the database
             String uid = user.getUid().toString();
-            DatabaseReference myRef = databaseReference.child("Admins").child(uid);
+            DatabaseReference myRef = databaseReference.child(uid);
             myRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     // This method is called once with the initial value and again
                     // whenever data at this location is updated.
-                    Log.d(TAG, "Admin Signed in");
-                    Intent i = new Intent(LoginActivity.this, MainActivity.class);
+                    Log.d(TAG, "User Signed in");
+                    Intent i = new Intent(LoginActivity.this, MainBoardUser.class);
                     startActivity(i);
                 }
 
@@ -177,5 +178,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 }
             });
         }
+    }
+
+    /**
+     * Created by alialsaeedi on 11/15/16.
+     */
+
+    public static class StickyListHeadersListView  {
     }
 }
