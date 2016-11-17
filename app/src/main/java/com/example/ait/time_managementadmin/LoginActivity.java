@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -30,6 +31,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private EditText emailTextField;
     private EditText passwordTextField;
     private ProgressDialog progressDialog;
+    private ProgressBar progressBar;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseAuth.AuthStateListener firebaseAuthListener;
@@ -48,6 +50,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         databaseReference = firebaseDatabase.getReference("Users");
 
         progressDialog = new ProgressDialog(this);
+        progressBar = new ProgressBar(this);
         loginButton = (Button) findViewById(R.id.loginButton);
         signupButton = (Button) findViewById(R.id.signupButton);
         emailTextField = (EditText) findViewById(R.id.emailTextField);
@@ -79,9 +82,24 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (v == loginButton) {
             registerUser();
         } else if (v == signupButton) {
+            finish();
             Intent signup = new Intent(LoginActivity.this, SignUpActivity.class);
             //SignUpActivity.addFlags(getIntent().FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(signup);
+        }
+
+    }
+
+    private void hidden(boolean visible) {
+        int value = 0;
+        if (visible) {
+            signupButton.setVisibility(View.VISIBLE);
+            loginButton.setVisibility(View.VISIBLE);
+            emailTextField.setVisibility(View.VISIBLE);
+            passwordTextField.setVisibility(View.VISIBLE);
+        } else {
+
+
         }
 
     }
@@ -158,6 +176,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private void updateUI(FirebaseUser user) {
         if (user != null) {
             // Read from the database
+            hidden(true);
+            //progressBar.set
             String uid = user.getUid().toString();
             DatabaseReference myRef = databaseReference.child(uid);
             myRef.addValueEventListener(new ValueEventListener() {
@@ -166,6 +186,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     // This method is called once with the initial value and again
                     // whenever data at this location is updated.
                     Log.d(TAG, "User Signed in");
+                    finish();
                     Intent i = new Intent(LoginActivity.this, MainBoardUser.class);
                     startActivity(i);
                 }
@@ -180,10 +201,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    /**
-     * Created by alialsaeedi on 11/15/16.
-     */
-
-    public static class StickyListHeadersListView  {
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 }
