@@ -1,6 +1,7 @@
 package com.example.ait.time_managementadmin;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -51,6 +53,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         progressDialog = new ProgressDialog(this);
         progressBar = new ProgressBar(this);
+
         loginButton = (Button) findViewById(R.id.loginButton);
         signupButton = (Button) findViewById(R.id.signupButton);
         emailTextField = (EditText) findViewById(R.id.emailTextField);
@@ -62,6 +65,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         firebaseAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                visibility(true);
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
@@ -80,6 +84,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onClick(View v) {
         if (v == loginButton) {
+           // loginButton.setEnabled(false);
             registerUser();
         } else if (v == signupButton) {
             finish();
@@ -90,17 +95,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
-    private void hidden(boolean visible) {
+    private void visibility(boolean visible) {
         int value = 0;
-        if (visible) {
-            signupButton.setVisibility(View.VISIBLE);
-            loginButton.setVisibility(View.VISIBLE);
-            emailTextField.setVisibility(View.VISIBLE);
-            passwordTextField.setVisibility(View.VISIBLE);
+        if (visible == true) {
+            value = View.VISIBLE;
         } else {
-
+            value = View.INVISIBLE;
 
         }
+        loginButton.setVisibility(value);
+        emailTextField.setVisibility(value);
+        passwordTextField.setVisibility(value);
+        signupButton.setVisibility(value);
 
     }
 
@@ -139,6 +145,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         return valid;
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        progressDialog.dismiss();
+    }
+
     private void registerUser() {
         String email = emailTextField.getText().toString();
         String pass = passwordTextField.getText().toString();
@@ -148,9 +160,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             return;
         }
 
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(passwordTextField.getWindowToken(), 0);
+
         progressDialog.setMessage("Signing In...");
         progressDialog.show();
 
+        visibility(false);
         firebaseAuth.signInWithEmailAndPassword(email, pass).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
@@ -163,46 +179,58 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     Log.w(TAG, "signInWithEmail:failed", task.getException());
                     Toast.makeText(LoginActivity.this, R.string.auth_failed,
                             Toast.LENGTH_SHORT).show();
+                    visibility(true);
                 } else {
                     updateUI(firebaseAuth.getCurrentUser());
                 }
 
                 progressDialog.hide();
+                visibility(true);
             }
         });
 
     }
 
     private void updateUI(FirebaseUser user) {
+        visibility(false);
+        if (!(progressDialog.isShowing())) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
         if (user != null) {
             // Read from the database
-            hidden(true);
+            //visibility(true);
             //progressBar.set
             String uid = user.getUid().toString();
             DatabaseReference myRef = databaseReference.child(uid);
             myRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    // This method is called once with the initial value and again
-                    // whenever data at this location is updated.
-                    Log.d(TAG, "User Signed in");
-                    finish();
-                    Intent i = new Intent(LoginActivity.this, MainBoardUser.class);
-                    startActivity(i);
+                    if (dataSnapshot.exists()) {
+                        // This method is called once with the initial value and again
+                        // whenever data at this location is updated.
+                        Log.d(TAG, "User Signed in");
+                        finish();
+                        Intent i = new Intent(LoginActivity.this, MainBoardUser.class);
+                        startActivity(i);
+                    } else {
+                        if (firebaseAuth.getCurrentUser() != null) {
+                            firebaseAuth.signOut();
+                            // visibility(true);
+                        }
+                    }
                 }
 
                 @Override
                 public void onCancelled(DatabaseError error) {
                     // Failed to read value
                     Log.w(TAG, "Failed to read value.", error.toException());
-                    firebaseAuth.signOut();
+                    if (firebaseAuth.getCurrentUser() != null) {
+                        firebaseAuth.signOut();
+                    }
                 }
             });
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
+
 }

@@ -24,7 +24,28 @@
         <activity
             android:name=".MainBoardUser"
             android:label="@string/title_activity_main_board_user"
-            android:theme="@style/AppTheme.NoActionBar"></activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <activity
+            android:name=".PickDate"
+            android:label="@string/title_activity_main"
+            android:parentActivityName="com.example.ait.time_managementadmin.Addevent" >
+
+        </activity>
+
+        <activity
+            android:name=".Addevent"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme" >
+            <!--android:parentActivityName="com.example.ait.time_managementadmin.MainBoardUser" >-->
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.ait.time_managementadmin.MainBoardUser" />
+        </activity>
+
+
+        <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data
             android:name="com.google.android.gms.version"
