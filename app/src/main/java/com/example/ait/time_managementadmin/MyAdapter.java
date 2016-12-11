@@ -95,7 +95,17 @@ public class MyAdapter extends BaseAdapter implements StickyListHeadersAdapter {
     @Override
     public long getHeaderId(int position) {
         //return the first character of the country as ID because this is what headers are based upon
-        return events.get(position).subSequence(0, 1).charAt(0);
+        //return events.get(position).subSequence(0, 1).charAt(0);
+
+        String x = events.get(position).split("-")[0];
+        char[] y = x.toCharArray();
+        long z = 0;
+
+        for (int i =0; i<y.length;i++)
+        {
+            z += (long) y[i];
+        }
+        return z;
 
     }
 

@@ -20,6 +20,13 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import static android.R.attr.name;
 
 /**
@@ -41,6 +48,8 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     private static final String TAG = "EmailPassword";
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
+
+    private String adminPass = "";
 
 
     @Override
@@ -129,7 +138,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     public void createAccount() {
         String email = emailText.getText().toString();
-        String password = passwordText.getText().toString();
+        final String password = passwordText.getText().toString();
         final String name = nameText.getText().toString();
         if (validate()) {
             firebaseAuth.createUserWithEmailAndPassword(email, password)
@@ -145,6 +154,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                 Toast.makeText(SignUpActivity.this, R.string.auth_failed,
                                         Toast.LENGTH_SHORT).show();
                             } else {
+                                savePasswordCache(password);
                                 FirebaseUser user = firebaseAuth.getCurrentUser();
                                 DatabaseReference myRef = databaseReference.child(user.getUid());
                                 myRef.child("Name").setValue(name);
@@ -162,5 +172,40 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     });
         }
     }
+
+    private void savePasswordCache(String data) {
+        File file;
+        FileOutputStream outputStream;
+        try {
+            // file = File.createTempFile("MyCache", null, getCacheDir()); //pass getFilesDir() to save file
+            file = new File(getCacheDir(), "PasswordCache");
+
+            outputStream = new FileOutputStream(file);
+            outputStream.write(data.getBytes());
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    private void readPasswordCache() {
+//        BufferedReader input = null;
+//        File file = null;
+//        try {
+//            file = new File(getCacheDir(), "PasswordCache"); // Pass getFilesDir() to read file
+//
+//            input = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+//            String line;
+//            StringBuffer buffer = new StringBuffer();
+//            while ((line = input.readLine()) != null) {
+//                buffer.append(line);
+//            }
+//
+//            Log.d(TAG, buffer.toString());
+//            password = buffer.toString();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 }

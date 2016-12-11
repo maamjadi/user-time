@@ -26,6 +26,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button loginButton;
@@ -66,11 +70,16 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 visibility(true);
-                FirebaseUser user = firebaseAuth.getCurrentUser();
+                final FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    updateUI(user);
+//                    new Thread(new Runnable() {
+//                        public void run() {
+                            updateUI(user);
+//                        }
+//                    }).start();
+                    //                    new UpdateUI().execute(firebaseAuth.getCurrentUser());
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
@@ -153,7 +162,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private void registerUser() {
         String email = emailTextField.getText().toString();
-        String pass = passwordTextField.getText().toString();
+        final String pass = passwordTextField.getText().toString();
 
         Log.d(TAG, "signIn:" + email);
         if (!validate()) {
@@ -181,7 +190,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             Toast.LENGTH_SHORT).show();
                     visibility(true);
                 } else {
-                    updateUI(firebaseAuth.getCurrentUser());
+//                    new Thread(new Runnable() {
+//                        public void run() {
+                            updateUI(firebaseAuth.getCurrentUser());
+//                        }
+//                    }).start();
+                                        //new UpdateUI().execute(firebaseAuth.getCurrentUser());
+                    savePasswordCache(pass);
                 }
 
                 progressDialog.hide();
@@ -190,6 +205,59 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         });
 
     }
+
+    //    private class UpdateUI extends AsyncTask<FirebaseUser, Void, String> {
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            visibility(false);
+//            if (!(progressDialog.isShowing())) {
+//                progressBar.setVisibility(View.VISIBLE);
+//            }
+//        }
+//
+//        @Override
+//        protected String doInBackground(FirebaseUser... firebaseUsers) {
+//            final String[] temp = {""};
+//            FirebaseUser user = firebaseAuth.getCurrentUser();
+//            if (user != null) {
+//                String uid = firebaseUsers[0].getUid().toString();
+//                DatabaseReference myRef = databaseReference.child(uid);
+//                myRef.addValueEventListener(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(DataSnapshot dataSnapshot) {
+//                        if (dataSnapshot.exists()) {
+//                            // This method is called once with the initial value and again
+//                            // whenever data at this location is updated.
+//                            temp[0] = "proved";
+//                            Log.d(TAG, "Admin Signed in");
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError error) {
+//                        // Failed to read value
+//                        Log.w(TAG, "Failed to read value.", error.toException());
+//                    }
+//                });
+//            }
+//            return temp[0];
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String result) {
+//            if (result.equals("proved")) {
+//                finish();
+//                startActivity(new Intent(LoginActivity.this, ScrollingActivity.class));
+//            } else {
+//                if (firebaseAuth.getCurrentUser() != null) {
+//                    firebaseAuth.signOut();
+//                }
+//            }
+//        }
+//
+//    }
 
     private void updateUI(FirebaseUser user) {
         visibility(false);
@@ -229,6 +297,21 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     }
                 }
             });
+        }
+    }
+
+    private void savePasswordCache(String data) {
+        File file;
+        FileOutputStream outputStream;
+        try {
+            // file = File.createTempFile("MyCache", null, getCacheDir()); //pass getFilesDir() to save file
+            file = new File(getCacheDir(), "PasswordCache");
+
+            outputStream = new FileOutputStream(file);
+            outputStream.write(data.getBytes());
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

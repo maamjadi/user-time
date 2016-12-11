@@ -17,8 +17,11 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.wdullaer.materialdatetimepicker.Utils;
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
 
@@ -26,6 +29,7 @@ import com.wdullaer.materialdatetimepicker.time.RadialPickerLayout;
 import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
 
 import java.util.Calendar;
+import java.util.HashMap;
 
 public class PickDate extends AppCompatActivity implements
         View.OnClickListener,
@@ -59,7 +63,7 @@ public class PickDate extends AppCompatActivity implements
     private String yearDate;
     private String monthDate;
     private String dayDate;
-
+    private HashMap<String, Boolean> defaultSettings;
 
     private String eventTitle;
     private String eventDetail;
@@ -69,10 +73,14 @@ public class PickDate extends AppCompatActivity implements
     private FirebaseAuth mAuthListener;
     private FirebaseUser user;
     private static final String TAG = "EmailPassword";
-
+    private DatabaseReference settingsReference;
+    private int currentYear;
+    private int currentMonth;
+    private int currentDay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pickdate);
         //getEvent();
@@ -103,6 +111,7 @@ public class PickDate extends AppCompatActivity implements
         dateString = new String();
         eventDetail = new String();
         eventTitle = new String();
+        defaultSettings = new HashMap<>();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.add_floating_button);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -125,6 +134,8 @@ public class PickDate extends AppCompatActivity implements
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference("Users");
         user = mAuthListener.getCurrentUser();
+        settingsReference = firebaseDatabase.getReference("Admins");
+
 //        mAuthListener = new FirebaseAuth.AuthStateListener() {
 //            @Override
 //            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -202,6 +213,7 @@ public class PickDate extends AppCompatActivity implements
                         now.get(Calendar.YEAR),
                         now.get(Calendar.MONTH),
                         now.get(Calendar.DAY_OF_MONTH)
+
                 );
                 dpd.setThemeDark(modeDarkDate.isChecked());
                 dpd.vibrate(vibrateDate.isChecked());
@@ -243,6 +255,8 @@ public class PickDate extends AppCompatActivity implements
                 dpd.show(getFragmentManager(), "Datepickerdialog");
             }
         });
+        getDefaultSettings();
+        //checkDate();
     }
 
     @Override
@@ -342,10 +356,106 @@ public class PickDate extends AppCompatActivity implements
     }
 
     public void saveToDataBase() {
-        DatabaseReference myref = databaseReference.child(user.getUid());
+        DatabaseReference myref;
+
+           myref = databaseReference.child(user.getUid());
+
         //myref.child("Events").setValue(yearDate + "/" + monthDate + "/" + dayDate  + " : "+ timeString+ "-"  +  eventTitle);
         //myref.child("Events").child(yearDate + " " + monthDate + " " + dayDate).setValue(" : " + timeString + "-" + eventTitle);
-        myref.child("Events").child(yearDate + " " + monthDate + " " + dayDate).child(timeString).setValue(eventTitle + "_" +eventDetail);
+        String date = yearDate + " " + monthDate + " " + dayDate;
+        myref.child("Events").child(date).child(timeString).setValue(eventTitle + "_" + eventDetail);
+    }
+
+    public void getDefaultSettings() {
+        settingsReference = settingsReference.child("Settings");
+        settingsReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                defaultSettings = (HashMap<String, Boolean>) dataSnapshot.getValue();
+                if (defaultSettings != null) {
+                    for (String choice : defaultSettings.keySet()) {
+                        switch (choice) {
+                            case "disableDates":
+                                disableDates.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "dismissDate":
+                                dismissDate.setChecked(defaultSettings.get(choice));
+                                break;
+//                            case "dissmissTime":
+//                                dismissTime.setChecked(defaultSettings.get("dismissTime"));
+                            // break;
+                            case "enableMinutes":
+                                enableMinutes.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "highlightDates":
+                                highlightDates.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "enableSeconds":
+                                enableSeconds.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "limitDates":
+                                limitDates.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "limitTimes":
+                                limitTimes.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "mode24Hours":
+                                mode24Hours.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "modeCustomAccentDate":
+                                modeCustomAccentDate.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "modeCustomAccentTime":
+                                modeCustomAccentTime.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "modeDarkDate":
+                                modeDarkDate.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "modeDarkTime":
+                                modeDarkTime.setChecked(defaultSettings.get(choice));
+                                break;
+
+                            case "showYearFirst":
+                                showYearFirst.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "titleDate":
+                                titleDate.setChecked(defaultSettings.get(choice));
+                                break;
+
+                            case "titleTime":
+                                titleTime.setChecked(defaultSettings.get(choice));
+                                break;
+                            case "vibrateDate":
+                                vibrateDate.setChecked(defaultSettings.get(choice));
+                                break;
+
+                            case "vibrateTime":
+                                vibrateTime.setChecked(defaultSettings.get(choice));
+                                break;
+                            default:
+                                break;
+
+                        }
+
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+    }
+
+    private boolean checkDate() {
+        boolean value = true;
+        Calendar calendar = Calendar.getInstance();
+        currentYear = calendar.get(Calendar.YEAR);
+        currentMonth = calendar.get(Calendar.MONTH);
+        currentDay = calendar.get(Calendar.DAY_OF_MONTH);
+        return value;
     }
 
 }

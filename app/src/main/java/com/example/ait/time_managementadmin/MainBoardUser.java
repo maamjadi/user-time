@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -34,11 +35,11 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
+//import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 import se.emilsjolander.stickylistheaders.ExpandableStickyListHeadersListView;
-import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
+import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
 public class MainBoardUser extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -50,6 +51,7 @@ public class MainBoardUser extends AppCompatActivity
     private DatabaseReference databaseReference;
     private FirebaseUser firebaseUser;
     private DatabaseReference ref;
+    private DatabaseReference deleteEventReference;
     private static final String TAG = "EmailPassword";
 
     private EditText name;
@@ -82,8 +84,11 @@ public class MainBoardUser extends AppCompatActivity
         ref = firebaseDatabase.getReference("Users");
         firebaseAuth = FirebaseAuth.getInstance();
         ref = firebaseDatabase.getReference("Users");
-        ref = databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("Events");
+        if (firebaseAuth.getCurrentUser() != null) {
+            deleteEventReference = databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("Events");
 
+            ref = databaseReference.child(firebaseAuth.getCurrentUser().getUid()).child("Events");
+        }
 
 
         years = new ArrayList<>();
@@ -95,8 +100,39 @@ public class MainBoardUser extends AppCompatActivity
         expandableStickyList.setAdapter(adapter);
         expandableStickyList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(MainBoardUser.this, events.get(position).split("_")[1], Toast.LENGTH_LONG).show();
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                //Toast.makeText(MainBoardUser.this, events.get(position).split("_")[1], Toast.LENGTH_LONG).show();
+                Snackbar snackbar = Snackbar.make(view, events.get(position).split("_")[1], Snackbar.LENGTH_LONG)
+                        .setAction("Delete", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+
+                                //events.remove(position);
+                                deleteEventReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        Map<String, Object> objectEventDate = (HashMap<String, Object>) dataSnapshot.getValue();
+                                        if (objectEventDate != null) {
+                                            for (String date : objectEventDate.keySet()) {
+
+                                                if (date.equals(events.get(position).split("-")[0])) {
+                                                    DatabaseReference tempRef = deleteEventReference.child(date);
+                                                    tempRef.removeValue();
+                                                }
+                                            }
+
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+
+                                    }
+                                });
+
+                            }
+                        });
+                snackbar.show();
             }
         });
 
@@ -146,26 +182,26 @@ public class MainBoardUser extends AppCompatActivity
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Map<String, Object> objectEventDate = (HashMap<String, Object>) dataSnapshot.getValue();
-                for (String date : objectEventDate.keySet()) {
+                if (dataSnapshot.exists()) {
+                    Map<String, Object> objectEventDate = (HashMap<String, Object>) dataSnapshot.getValue();
+                    for (String date : objectEventDate.keySet()) {
 
-                    String tempDate = date;
 
-                    // ref = ref.child(date);
-                    DataSnapshot tempSnapShot = dataSnapshot.child(date);
+                        DataSnapshot tempSnapShot = dataSnapshot.child(date);
 
-                    Map<String, Object> objectEvent = (HashMap<String, Object>) tempSnapShot.getValue();
-                    if (objectEvent != null) {
-                        for (String time : objectEvent.keySet()) {
-                            //eventTitle = objectEvent.get(time).toString().split("_")[0];
-                            event = date + "-" + time + " : " + objectEvent.get(time);
-                            events.add(event);
+                        Map<String, Object> objectEvent = (HashMap<String, Object>) tempSnapShot.getValue();
+                        if (objectEvent != null) {
+                            for (String time : objectEvent.keySet()) {
+                                //eventTitle = objectEvent.get(time).toString().split("_")[0];
+                                event = date + "-" + time + " : " + objectEvent.get(time);
+                                events.add(event);
 
+                            }
                         }
                     }
 
 
-                    events.add(" - _ ");
+                    //events.add(" - _ ");
 
 //                    ref.addValueEventListener(new ValueEventListener() {
 //                        @Override
@@ -411,6 +447,7 @@ public class MainBoardUser extends AppCompatActivity
 
         return counter;
     }
+
     private void cleanEvents() {
         ArrayList<String> tempEvents = new ArrayList<String>();
         for (int i = 0, j = 1; i < events.size(); ++i, ++j) {
@@ -423,8 +460,12 @@ public class MainBoardUser extends AppCompatActivity
         }
 
 
+    }
+
+    private void deleteAnEvent(int position) {
+        events.remove(position);
 
 
-}
+    }
 
 }
